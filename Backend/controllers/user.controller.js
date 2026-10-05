@@ -13,6 +13,11 @@ module.exports.registerUser = async (req, res) => {
 
     const { fullname , email, password } = req.body;
 
+    const isUserExist =await captainModel.findOne({email});
+        if(isUserExist){
+            return res.status(400).json({message:'Captain already exist'});
+        }
+
     const hashedPassword = await userModel.hashedPassword(password);
 
     const user = await userService.createUser({ firstname : fullname.firstname , lastname: fullname.lastname, email, password: hashedPassword });
@@ -53,11 +58,16 @@ module.exports.getUserProfile = async (req, res,next) => {
 };
 
 module.exports.logoutuser =async (req,res,next)=> {
-    res.clearCookie('token');
-    const token = req.cookies.token || req.headers['authorization']?.split(' ')[1];
-
-    await blacklistmodel.create({token});
-
-    res.status(200).json({message: 'logged out successfully'});
-
+    
+        const token =req.cookies?.token || req.headers.authorization?.split(' ')[1];
+    
+        if (token) {
+            await blacklistmodel.create({ token });
+        }
+    
+        res.clearCookie('token');
+    
+        res.status(200).json({
+            message: 'logged out successfully'
+        });
 };
