@@ -12,15 +12,15 @@ module.exports.registerUser = async (req, res) => {
     }
 
     const { fullname , email, password } = req.body;
-
-    const isUserExist =await captainModel.findOne({email});
+    const normalizedEmail = email.trim().toLowerCase();
+    const isUserExist =await userModel.findOne({email: normalizedEmail});
         if(isUserExist){
             return res.status(400).json({message:'Captain already exist'});
         }
 
     const hashedPassword = await userModel.hashedPassword(password);
 
-    const user = await userService.createUser({ firstname : fullname.firstname , lastname: fullname.lastname, email, password: hashedPassword });
+    const user = await userService.createUser({ firstname : fullname.firstname.trim() , lastname: fullname.lastname.trim(), email:normalizedEmail, password: hashedPassword });
 
     const token = user.generateAuthToken();
 

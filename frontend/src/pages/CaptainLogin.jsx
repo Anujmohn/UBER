@@ -1,19 +1,21 @@
-import {Link} from "react-router-dom"
+import {Link , useNavigate} from "react-router-dom"
 import React, { useState } from 'react'
 
-const CaptainLogin =()=>{
 
+const CaptainLogin =()=>{
+    const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const[password,setPassword] =useState('');
     const[CaptainData, setCaptainData]= useState({})
 
-    const submitHandler=(e)=>{
+    const submitHandler=async(e)=>{
         setCaptainData({
             email:email,
             password:password
         })
         setEmail('')
         setPassword('')
+        navigate("/CaptainHome");
     }
 
     return (

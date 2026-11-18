@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { CaptainDataContext } from "../context/CaptainContext";
 
 const CaptainSignup = () => {
 const navigate = useNavigate();
-
 
 const [step, setStep] = useState(1);
 
@@ -17,6 +18,10 @@ const [color, setColor] = useState("");
 const [plate, setPlate] = useState("");
 const [capacity, setCapacity] = useState("");
 const [vehicleType, setVehicleType] = useState("car");
+const [submitError, setSubmitError] = useState("");
+const [isSubmitting, setIsSubmitting] = useState(false);
+
+const { setCaptain } = React.useContext(CaptainDataContext);
 
 // Move to the next step
 const nextStep = () => {
@@ -32,9 +37,10 @@ const previousStep = () => {
     }
 };
 
-// Create account and redirect to Captain Login
-const submitHandler = (e) => {
+// Create the account before saving the session and navigating.
+const submitHandler = async(e) => {
     e.preventDefault();
+    setSubmitError("");
 
     const captainData = {
         fullname: {
@@ -51,10 +57,44 @@ const submitHandler = (e) => {
         },
     };
 
-    console.log("Captain Data:", captainData);
+    setIsSubmitting(true);
 
-    // Redirect to Captain Login without displaying a popup
-    navigate("/CaptainLogin");
+    try {
+        const response = await axios.post(
+            `${import.meta.env.VITE_BASE_URL}/captain/register`,
+            captainData
+        );
+        const { captain, token } = response.data ?? {};
+
+        if (
+            response.status !== 201 ||
+            !captain ||
+            typeof token !== "string" ||
+            !token.trim()
+        ) {
+            throw new Error("The server did not confirm account creation. Please try again.");
+        }
+
+        setCaptain(captain);
+        localStorage.setItem("captain", JSON.stringify(captain));
+        localStorage.setItem("captainToken", token);
+        navigate("/CaptainHome");
+    } catch (error) {
+        const responseData = error.response?.data;
+        const validationErrors = responseData?.errors
+            ?.map(({ msg }) => msg)
+            .filter(Boolean)
+            .join(" ");
+
+        setSubmitError(
+            responseData?.message ||
+                validationErrors ||
+                error.message ||
+                "Unable to create your captain account. Please try again."
+        );
+    } finally {
+        setIsSubmitting(false);
+    }
 };
 
 // Validate each step
@@ -115,6 +155,11 @@ return (
             </div>
 
             <form onSubmit={submitHandler}>
+                {submitError && (
+                    <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+                        {submitError}
+                    </p>
+                )}
 
                 {/* STEP 1: PERSONAL DETAILS */}
                 {step === 1 && (
@@ -414,9 +459,10 @@ return (
 
                             <button
                                 type="submit"
-                                className="w-1/2 bg-black text-white rounded px-4 py-3"
+                                disabled={isSubmitting}
+                                className="w-1/2 bg-black text-white rounded px-4 py-3 disabled:cursor-not-allowed disabled:bg-gray-400"
                             >
-                                Create Account
+                                {isSubmitting ? "Creating Account..." : "Create Account"}
                             </button>
                         </div>
                     </div>

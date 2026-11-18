@@ -23,7 +23,7 @@ module.exports.registerCaptain =async(req,res ,next)=>{
 
     const captain =await captainService.createCaptain({
         firstname: fullname.firstname,
-        llastname: fullname.lastname,
+        lastname: fullname.lastname,
         email, password : hashPassword,
         color: vehicle.color,
         plate : vehicle.plate,
